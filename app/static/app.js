@@ -301,6 +301,37 @@ $("#dlForm").addEventListener("submit", async (e) => {
   $("#dlSend").disabled = false;
 });
 
+/* ---- cookies do YouTube */
+
+async function refreshCookies() {
+  let st;
+  try { st = await api("/api/cookies"); } catch (e) { console.error(e); return; }
+  $("#ckState").textContent = st.active
+    ? `ativos · ${new Date(st.updated * 1000).toLocaleDateString()}` : "não definidos";
+  $("#ckDelete").hidden = !st.active;
+}
+
+$("#ckFile").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  const fd = new FormData();
+  fd.append("file", file);
+  try {
+    await api("/api/cookies", { method: "POST", body: fd });
+    alert("Cookies guardados. Tenta o download outra vez.");
+  } catch (err) { alert(err.message); }
+  refreshCookies();
+});
+
+$("#ckDelete").addEventListener("click", async () => {
+  if (!confirm("Remover os cookies do YouTube do servidor?")) return;
+  try { await api("/api/cookies", { method: "DELETE" }); } catch (e) { alert(e.message); }
+  refreshCookies();
+});
+
+refreshCookies();
+
 /* ---- refazer letra */
 
 let redoSong = null;

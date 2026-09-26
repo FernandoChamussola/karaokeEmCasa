@@ -74,6 +74,26 @@
       <p class="muted small">Só o áudio fica guardado. O vídeo é apagado logo a seguir.</p>
     </form>
 
+    <details id="cookies" class="card cookies">
+      <summary>🍪 Cookies do YouTube <span id="ckState" class="tag"></span></summary>
+      <p class="muted small">
+        Num servidor, o YouTube costuma pedir "confirma que não és um robô". Para contornar,
+        o servidor usa a sessão da tua conta do YouTube:
+      </p>
+      <ol class="muted small">
+        <li>No computador, instala a extensão <b>Get cookies.txt LOCALLY</b> (Chrome ou Firefox).</li>
+        <li>Abre <b>youtube.com</b> com a sessão iniciada (de preferência numa conta secundária).</li>
+        <li>Na extensão, carrega em <b>Export</b> e escolhe o ficheiro aqui em baixo.</li>
+      </ol>
+      <div class="row">
+        <label class="ghost-btn">
+          <input type="file" id="ckFile" accept=".txt,text/plain" hidden>
+          📄 Escolher cookies.txt
+        </label>
+        <button type="button" class="ghost" id="ckDelete" hidden>Remover</button>
+      </div>
+    </details>
+
     <div class="list-head"><h2>Descarregadas</h2></div>
     <ul id="downloads" class="items"></ul>
   </div>

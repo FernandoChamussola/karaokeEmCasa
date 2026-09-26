@@ -199,6 +199,25 @@ def add_download(
     return downloads.add(url, auto_karaoke, language)
 
 
+@app.get("/api/cookies")
+def get_cookies():
+    return downloads.cookies_status()
+
+
+@app.post("/api/cookies")
+def upload_cookies(file: UploadFile = File(...)):
+    data = file.file.read(2_000_000)
+    try:
+        return downloads.save_cookies(data)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.delete("/api/cookies")
+def delete_cookies():
+    return downloads.delete_cookies()
+
+
 @app.post("/api/downloads/{dl_id}/karaoke")
 def download_to_karaoke(
     dl_id: str,

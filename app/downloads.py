@@ -4,6 +4,7 @@ Só fica guardado o áudio em mp3; o vídeo é apagado logo a seguir à extraç�
 Os downloads têm uma fila própria, para não ficarem à espera da separação de voz.
 """
 import logging
+import os
 import queue
 import threading
 import time
@@ -14,6 +15,39 @@ from . import audio, lyrics, store, worker
 log = logging.getLogger("karaoke.downloads")
 _queue: "queue.Queue[str]" = queue.Queue()
 KEEP = {"audio.mp3", "meta.json"}
+# Cookies de uma conta do YouTube (formato Netscape). Em servidores/VPS o YouTube
+# pede "Sign in to confirm you're not a bot" e só deixa descarregar com sessão iniciada.
+COOKIES = store.DATA_DIR / "cookies.txt"
+BOT_CHECK_HINT = ("O YouTube bloqueou o servidor (pede sessão iniciada). Carrega um cookies.txt "
+                  "da tua conta do YouTube em \"🍪 Cookies do YouTube\", aqui em cima, e tenta outra vez.")
+
+
+def cookies_status() -> dict:
+    if not COOKIES.exists():
+        return {"active": False}
+    return {"active": True, "updated": COOKIES.stat().st_mtime}
+
+
+def save_cookies(data: bytes) -> dict:
+    text = data.decode("utf-8", errors="replace").replace("\r\n", "\n")
+    lines = [l for l in text.splitlines() if l.strip() and not l.startswith("#")
+             or l.startswith("#HttpOnly_")]
+    if not any(len(l.split("\t")) == 7 for l in lines):
+        raise ValueError("Isto não parece um cookies.txt (formato Netscape). "
+                         "Exporta-o com a extensão \"Get cookies.txt LOCALLY\".")
+    if not any("youtube.com" in l for l in lines):
+        raise ValueError("O ficheiro não tem cookies do youtube.com")
+    if not text.startswith("# Netscape HTTP Cookie File"):  # o yt-dlp exige este cabeçalho
+        text = "# Netscape HTTP Cookie File\n" + text
+    tmp = COOKIES.with_suffix(".tmp")
+    tmp.write_text(text, "utf-8")
+    os.replace(tmp, COOKIES)
+    return cookies_status()
+
+
+def delete_cookies() -> dict:
+    COOKIES.unlink(missing_ok=True)
+    return cookies_status()
 
 
 def add(url: str, auto_karaoke: bool, language: str) -> dict:
@@ -75,6 +109,8 @@ def _loop() -> None:
         except Exception as e:
             log.exception("Erro no download %s", dl_id)
             msg = str(e).removeprefix("ERROR: ")
+            if "confirm you" in msg and "not a bot" in msg:
+                msg = BOT_CHECK_HINT
             store.downloads.update(dl_id, status="error", stage="Erro", error=msg[-600:])
 
 
@@ -132,6 +168,8 @@ def _download(dl_id: str) -> None:
         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3",
                             "preferredquality": "192"}],
     }
+    if COOKIES.exists():
+        opts["cookiefile"] = str(COOKIES)
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(meta["url"], download=True)
 
