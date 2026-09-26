@@ -10,6 +10,7 @@ services:
       - default  # para falar com o pot-provider
     depends_on:
       - pot-provider
+      - warp
     # NÃO coloques "ports:" aqui! O Traefik encaminha o tráfego pela network.
     volumes:
       - karaoke-data:/data  # músicas processadas
@@ -22,6 +23,8 @@ services:
       # Senha de acesso ao site (definir nas variáveis da stack no Portainer)
       APP_PASSWORD: ${APP_PASSWORD:?Define APP_PASSWORD}
       POT_PROVIDER_URL: http://pot-provider:4416
+      # Os downloads saem pelo Cloudflare WARP: o YouTube bloqueia o IP da VPS (datacenter)
+      YTDLP_PROXY: ${YTDLP_PROXY:-socks5h://warp:1080}
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
@@ -40,9 +43,31 @@ services:
     networks:
       - default
 
+  # Cloudflare WARP: dá aos downloads um IP que o YouTube aceita (proxy SOCKS5/HTTP na 1080)
+  warp:
+    image: caomingjun/warp:latest
+    container_name: karaoke-warp
+    restart: unless-stopped
+    device_cgroup_rules:
+      - 'c 10:200 rwm'
+    cap_add:
+      - MKNOD
+      - AUDIT_WRITE
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      WARP_SLEEP: 2
+    volumes:
+      - warp-data:/var/lib/cloudflare-warp
+    networks:
+      - default
+
 volumes:
   karaoke-data:
   models:
+  warp-data:
 
 networks:
   default:

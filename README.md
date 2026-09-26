@@ -39,6 +39,13 @@ O `docker-compose.yml` é o de produção: não expõe portas e publica a app em
 
 As músicas ficam no volume `karaoke-data` e os modelos no volume `models`.
 
+O YouTube bloqueia downloads feitos a partir de IPs de datacenter ("confirm you're not a bot"). Por isso a stack de produção tem mais dois contentores, que funcionam sozinhos:
+
+- `karaoke-warp`: Cloudflare WARP. Os downloads saem por ele, com um IP que o YouTube aceita.
+- `karaoke-pot`: gera os "PO tokens" que o YouTube pede.
+
+Plano B, se voltar a bloquear: abre `/?admin` e carrega um `cookies.txt` de uma conta do YouTube.
+
 Na primeira música vai demorar mais, porque é preciso descarregar os modelos (cerca de 1,5 GB). Ficam guardados no volume `models`.
 
 ## Tempos (só CPU, sem placa gráfica)
