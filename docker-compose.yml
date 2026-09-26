@@ -7,6 +7,9 @@ services:
     restart: unless-stopped
     networks:
       - traefik-public
+      - default  # para falar com o pot-provider
+    depends_on:
+      - pot-provider
     # NÃO coloques "ports:" aqui! O Traefik encaminha o tráfego pela network.
     volumes:
       - karaoke-data:/data  # músicas processadas
@@ -18,6 +21,7 @@ services:
       DEMUCS_MODEL: ${DEMUCS_MODEL:-htdemucs}
       # Senha de acesso ao site (definir nas variáveis da stack no Portainer)
       APP_PASSWORD: ${APP_PASSWORD:?Define APP_PASSWORD}
+      POT_PROVIDER_URL: http://pot-provider:4416
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
@@ -26,10 +30,21 @@ services:
       - "traefik.http.routers.kamusic.tls.certresolver=letsencrypt"
       - "traefik.http.services.kamusic.loadbalancer.server.port=8000"
 
+  # Gera os "PO tokens" que o YouTube pede para provar que não é um robô.
+  # Sem isto, o YouTube bloqueia os downloads feitos a partir de servidores.
+  pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    container_name: karaoke-pot
+    init: true
+    restart: unless-stopped
+    networks:
+      - default
+
 volumes:
   karaoke-data:
   models:
 
 networks:
+  default:
   traefik-public:
     external: true

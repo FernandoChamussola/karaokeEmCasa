@@ -18,7 +18,8 @@ RUN pip install -r requirements.txt
 
 # yt-dlp (downloads por link). O YouTube exige um motor de JavaScript: o Deno.
 COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
-RUN pip install -U "yt-dlp[default]"
+# + plugin que obtém "PO tokens" do contentor pot-provider (evita o "confirm you're not a bot")
+RUN pip install -U "yt-dlp[default]" bgutil-ytdlp-pot-provider
 
 COPY app ./app
 
@@ -31,4 +32,4 @@ ENV DATA_DIR=/data \
 EXPOSE 8000
 # O YouTube muda muitas vezes e versões antigas do yt-dlp deixam de funcionar,
 # por isso tenta atualizá-lo sempre que o contentor arranca (se falhar, segue em frente).
-CMD ["sh", "-c", "if [ \"$YTDLP_AUTO_UPDATE\" = 1 ]; then timeout 90 pip install -q -U 'yt-dlp[default]' || echo 'Aviso: não foi possível atualizar o yt-dlp'; fi; exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "if [ \"$YTDLP_AUTO_UPDATE\" = 1 ]; then timeout 90 pip install -q -U 'yt-dlp[default]' bgutil-ytdlp-pot-provider || echo 'Aviso: não foi possível atualizar o yt-dlp'; fi; exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]

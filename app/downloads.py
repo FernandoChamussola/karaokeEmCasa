@@ -18,8 +18,12 @@ KEEP = {"audio.mp3", "meta.json"}
 # Cookies de uma conta do YouTube (formato Netscape). Em servidores/VPS o YouTube
 # pede "Sign in to confirm you're not a bot" e só deixa descarregar com sessão iniciada.
 COOKIES = store.DATA_DIR / "cookies.txt"
-BOT_CHECK_HINT = ("O YouTube bloqueou o servidor (pede sessão iniciada). Carrega um cookies.txt "
-                  "da tua conta do YouTube em \"🍪 Cookies do YouTube\", aqui em cima, e tenta outra vez.")
+BOT_CHECK_HINT = ("O YouTube bloqueou este download por agora. Tenta outra vez mais tarde "
+                  "ou experimenta outro link da mesma música.")
+# Serviço que gera os "PO tokens" do YouTube (contentor pot-provider no docker-compose)
+POT_PROVIDER_URL = os.environ.get("POT_PROVIDER_URL", "")
+# Opcional: passar os downloads por um proxy (ex.: um IP de casa), se o YouTube insistir
+YTDLP_PROXY = os.environ.get("YTDLP_PROXY", "")
 
 
 def cookies_status() -> dict:
@@ -168,6 +172,10 @@ def _download(dl_id: str) -> None:
         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3",
                             "preferredquality": "192"}],
     }
+    if POT_PROVIDER_URL:
+        opts["extractor_args"] = {"youtubepot-bgutilhttp": {"base_url": [POT_PROVIDER_URL]}}
+    if YTDLP_PROXY:
+        opts["proxy"] = YTDLP_PROXY
     if COOKIES.exists():
         opts["cookiefile"] = str(COOKIES)
     with yt_dlp.YoutubeDL(opts) as ydl:

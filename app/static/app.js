@@ -330,7 +330,10 @@ $("#ckDelete").addEventListener("click", async () => {
   refreshCookies();
 });
 
-refreshCookies();
+if (new URLSearchParams(location.search).has("admin")) {
+  $("#cookies").hidden = false;
+  refreshCookies();
+}
 
 /* ---- refazer letra */
 

@@ -74,11 +74,12 @@
       <p class="muted small">Só o áudio fica guardado. O vídeo é apagado logo a seguir.</p>
     </form>
 
-    <details id="cookies" class="card cookies">
+    <!-- Plano B só para quem gere o site: aparece apenas em /?admin -->
+    <details id="cookies" class="card cookies" hidden>
       <summary>🍪 Cookies do YouTube <span id="ckState" class="tag"></span></summary>
       <p class="muted small">
-        Num servidor, o YouTube costuma pedir "confirma que não és um robô". Para contornar,
-        o servidor usa a sessão da tua conta do YouTube:
+        Se o YouTube continuar a bloquear os downloads mesmo com o PO token automático,
+        o servidor pode usar a sessão de uma conta do YouTube:
       </p>
       <ol class="muted small">
         <li>No computador, instala a extensão <b>Get cookies.txt LOCALLY</b> (Chrome ou Firefox).</li>
