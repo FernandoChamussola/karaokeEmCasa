@@ -13,6 +13,10 @@ log = logging.getLogger("karaoke.worker")
 _queue: "queue.Queue[str]" = queue.Queue()
 
 
+class Cancelled(Exception):
+    """A música foi apagada enquanto estava a ser processada."""
+
+
 def enqueue(song_id: str) -> None:
     _queue.put(song_id)
 
@@ -64,6 +68,10 @@ def _loop() -> None:
         song_id = _queue.get()
         try:
             _process(song_id)
+        except Cancelled:
+            log.info("Cancelada (apagada a meio): %s", song_id)
+            # o Demucs pode ter escrito ficheiros depois de a pasta ser apagada
+            shutil.rmtree(store.songs.dir(song_id), ignore_errors=True)
         except Exception as e:
             log.exception("Erro a processar %s", song_id)
             store.songs.update(song_id, status="error", stage="Erro", error=str(e)[-600:])
@@ -75,16 +83,22 @@ def _process(song_id: str) -> None:
     if meta is None:
         return
     d = songs.dir(song_id)
-    progress = lambda p: songs.update(song_id, progress=p)
-    stage = lambda s: songs.update(song_id, stage=s, progress=0)
+
+    def alive(**fields) -> dict:
+        # a cada atualização confirma que a música ainda existe; se foi apagada, pára tudo
+        if (m := songs.update(song_id, **fields)) is None:
+            raise Cancelled
+        return m
+
+    progress = lambda p: alive(progress=p)
+    stage = lambda s: alive(stage=s, progress=0)
 
     if not ((d / "instrumental.mp3").exists() and (d / "vocals.mp3").exists()):
-        songs.update(song_id, status="separating", stage="A separar a voz do instrumental…",
-                     progress=0, error=None)
+        alive(status="separating", stage="A separar a voz do instrumental…",
+              progress=0, error=None)
         audio.separate(d / meta["filename"], d, progress)
 
-    if songs.update(song_id, status="lyrics", progress=0, error=None) is None:
-        return
+    alive(status="lyrics", progress=0, error=None)
     result = lyrics.build(meta, d / "vocals.mp3", stage, progress)
     if not d.exists():
         return

@@ -42,19 +42,24 @@ def separate(src: Path, out_dir: Path, on_progress: Callable[[int], None]) -> No
 
     # O Demucs mostra uma barra tqdm ("45%|████ ..."); lemos a percentagem dela.
     buf, tail, last = b"", [], -1
-    while chunk := proc.stdout.read1(512):
-        buf += chunk
-        *parts, buf = re.split(rb"[\r\n]", buf)
-        for raw in parts:
-            line = raw.decode(errors="replace").strip()
-            if not line:
-                continue
-            tail = (tail + [line])[-15:]
-            if m := re.search(r"(\d+)%\|", line):
-                pct = int(m.group(1))
-                if pct != last:
-                    last = pct
-                    on_progress(pct)
+    try:
+        while chunk := proc.stdout.read1(512):
+            buf += chunk
+            *parts, buf = re.split(rb"[\r\n]", buf)
+            for raw in parts:
+                line = raw.decode(errors="replace").strip()
+                if not line:
+                    continue
+                tail = (tail + [line])[-15:]
+                if m := re.search(r"(\d+)%\|", line):
+                    pct = int(m.group(1))
+                    if pct != last:
+                        last = pct
+                        on_progress(pct)
+    except BaseException:  # ex.: a música foi apagada a meio -> não deixar o Demucs a correr
+        proc.kill()
+        proc.wait()
+        raise
 
     if proc.wait() != 0:
         raise RuntimeError("Falhou a separação da voz:\n" + "\n".join(tail))

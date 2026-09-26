@@ -6,6 +6,7 @@ Os downloads têm uma fila própria, para não ficarem à espera da separação 
 import logging
 import os
 import queue
+import shutil
 import threading
 import time
 import uuid
@@ -105,11 +106,18 @@ def start() -> None:
     threading.Thread(target=_loop, daemon=True, name="downloads").start()
 
 
+class _Cancelled(Exception):
+    """O download foi apagado enquanto decorria."""
+
+
 def _loop() -> None:
     while True:
         dl_id = _queue.get()
         try:
             _download(dl_id)
+        except _Cancelled:
+            log.info("Download cancelado (apagado a meio): %s", dl_id)
+            shutil.rmtree(store.downloads.dir(dl_id), ignore_errors=True)
         except Exception as e:
             log.exception("Erro no download %s", dl_id)
             msg = str(e).removeprefix("ERROR: ")
@@ -150,6 +158,8 @@ def _download(dl_id: str) -> None:
 
     def hook(h):
         nonlocal last
+        if dls.load(dl_id) is None:  # apagado a meio -> o yt-dlp pára aqui
+            raise _Cancelled
         if h["status"] == "downloading":
             total = h.get("total_bytes") or h.get("total_bytes_estimate")
             if total:
