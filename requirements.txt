@@ -1,0 +1,9 @@
+demucs==4.0.1
+faster-whisper==1.1.1
+fastapi==0.115.12
+uvicorn==0.34.0
+python-multipart==0.0.20
+httpx==0.28.1
+# o faster-whisper 1.1.1 importa "requests" e usa a API antiga do huggingface-hub
+requests==2.32.3
+huggingface-hub>=0.23,<1.0

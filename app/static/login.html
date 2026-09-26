@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar · Karaoke em Casa</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .login { max-width: 360px; margin: 18vh auto 0; padding: 0 16px; }
+    .login h1 { font-size: 2rem; font-weight: 900; margin: 0 0 20px; text-align: center; letter-spacing: -.5px; }
+    .login h1 span {
+      background: linear-gradient(90deg, var(--pink), var(--cyan));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .login form { display: flex; flex-direction: column; gap: 12px; }
+    .login .err { color: var(--err); font-weight: 700; margin: 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <main class="login">
+    <h1>🎤 Karaoke <span>em Casa</span></h1>
+    <form class="card" method="post" action="/login">
+      <input type="password" name="password" placeholder="Senha" autocomplete="current-password" required autofocus>
+      <p class="err" id="err" hidden>Senha errada</p>
+      <button class="primary" type="submit">Entrar</button>
+    </form>
+  </main>
+  <script>
+    if (new URLSearchParams(location.search).has("erro")) document.getElementById("err").hidden = false;
+  </script>
+</body>
+</html>

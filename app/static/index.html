@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karaoke em Casa</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ BIBLIOTECA ============ -->
+<section id="library" class="view">
+  <header class="top">
+    <h1>🎤 Karaoke <span>em Casa</span></h1>
+  </header>
+
+  <nav class="tabs">
+    <a href="#/" class="tab" data-tab="songs">🎤 Músicas</a>
+    <a href="#/downloads" class="tab" data-tab="downloads">⬇️ Downloads <span id="dlBadge" class="count" hidden></span></a>
+  </nav>
+
+  <!-- ---------- aba Músicas ---------- -->
+  <div id="tabSongs">
+  <form id="upload" class="card">
+    <div class="seg" id="srcSeg">
+      <button type="button" data-src="device" class="on">📁 Do dispositivo</button>
+      <button type="button" data-src="downloads">⬇️ Dos downloads</button>
+    </div>
+
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="audio/*,video/*" multiple hidden>
+      <span class="drop-icon">🎵</span>
+      <span id="dropText">Arrasta músicas para aqui ou <u>escolhe ficheiros</u></span>
+    </label>
+
+    <div id="fromDl" class="from-dl" hidden>
+      <select id="dlPick"></select>
+      <p class="muted small" id="dlPickHint"></p>
+    </div>
+
+    <div class="fields">
+      <input id="artist" placeholder="Artista (opcional)" autocomplete="off">
+      <input id="title" placeholder="Título (opcional)" autocomplete="off">
+      <select id="language" class="lang-select"></select>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="force"> Não procurar a letra online, transcrever com IA</label>
+      <button type="submit" id="send" class="primary" disabled>Adicionar</button>
+    </div>
+    <div class="upbar" id="upbar" hidden><i></i></div>
+  </form>
+
+  <div class="list-head">
+    <h2>Músicas</h2>
+    <input id="search" type="search" placeholder="Procurar…">
+  </div>
+  <ul id="songs" class="items"></ul>
+  </div>
+
+  <!-- ---------- aba Downloads ---------- -->
+  <div id="tabDownloads" hidden>
+    <form id="dlForm" class="card">
+      <div class="url-row">
+        <input id="dlUrl" type="url" placeholder="Cola aqui o link (YouTube, SoundCloud, …)" required autocomplete="off">
+        <button type="submit" class="primary" id="dlSend">Descarregar</button>
+      </div>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="dlAuto" checked> Criar o karaoke automaticamente no fim</label>
+        <select id="dlLang" class="lang-select"></select>
+      </div>
+      <p class="muted small">Só o áudio fica guardado. O vídeo é apagado logo a seguir.</p>
+    </form>
+
+    <div class="list-head"><h2>Descarregadas</h2></div>
+    <ul id="downloads" class="items"></ul>
+  </div>
+</section>
+
+<!-- ============ PALCO ============ -->
+<section id="player" class="view" hidden>
+  <div class="song-head">
+    <button id="back" class="icon" title="Voltar (Esc)">←</button>
+    <div class="now">
+      <div id="pTitle"></div>
+      <div id="pArtist"></div>
+    </div>
+    <span id="pSource" class="tag"></span>
+  </div>
+
+  <div id="lyricsBox">
+    <div id="countdown"></div>
+    <div id="lyrics"></div>
+  </div>
+
+  <div class="controls">
+    <div class="seek-row">
+      <span id="tCur">0:00</span>
+      <input type="range" id="seek" min="0" max="100" step="0.1" value="0">
+      <span id="tDur">0:00</span>
+    </div>
+    <div class="btn-row">
+      <button id="play" class="play" title="Tocar / pausa (Espaço)">▶</button>
+      <label class="slider" title="Volume da música">🎸 <input type="range" id="volInst" min="0" max="1" step="0.01"></label>
+      <label class="slider" title="Voz original baixinho, para ajudar">🗣️ Voz guia <input type="range" id="volVoc" min="0" max="1" step="0.01"></label>
+      <div class="offset" title="Se a letra aparecer adiantada ou atrasada">
+        Letra
+        <button id="offMinus" class="icon sm">−</button>
+        <span id="offVal">0.0s</span>
+        <button id="offPlus" class="icon sm">+</button>
+      </div>
+      <button id="fs" class="icon" title="Ecrã inteiro (F)">⛶</button>
+    </div>
+  </div>
+
+  <audio id="aInst" preload="auto"></audio>
+  <audio id="aVoc" preload="auto"></audio>
+</section>
+
+<!-- ============ REFAZER LETRA ============ -->
+<dialog id="redoDlg">
+  <form method="dialog" id="redoForm">
+    <h3>Refazer a letra</h3>
+    <p class="muted">Corrige o artista e o título para encontrar a letra certa online, ou força a transcrição com IA.</p>
+    <input name="artist" placeholder="Artista">
+    <input name="title" placeholder="Título">
+    <select name="language" class="lang-select"></select>
+    <label class="check"><input type="checkbox" name="force"> Transcrever com IA (ignorar a letra online)</label>
+    <menu>
+      <button value="cancel" class="ghost">Cancelar</button>
+      <button value="ok" class="primary">Refazer</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

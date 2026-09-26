@@ -1,0 +1,20 @@
+services:
+  karaoke:
+    container_name: karaoke-dev
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data        # músicas processadas (ficam no teu PC, em ./data)
+      - models:/models      # modelos de IA descarregados (só na primeira vez)
+    environment:
+      # tiny | base | small | medium | large-v3-turbo  (maior = melhor letra, mais lento)
+      WHISPER_MODEL: medium
+      # htdemucs (rápido) | htdemucs_ft (um pouco melhor, ~4x mais lento)
+      DEMUCS_MODEL: htdemucs
+      # Senha de acesso (vazia = sem login). Vem do ficheiro .env
+      APP_PASSWORD: ${APP_PASSWORD:-}
+    restart: unless-stopped
+
+volumes:
+  models:

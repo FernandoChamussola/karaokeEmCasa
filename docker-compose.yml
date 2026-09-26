@@ -1,0 +1,35 @@
+# Produção (Portainer + Traefik) -> https://kamusic.duckdns.org
+# Para desenvolvimento local usa: docker compose -f docker-compose.dev.yml up -d --build
+services:
+  karaoke:
+    build: .
+    container_name: karaoke
+    restart: unless-stopped
+    networks:
+      - traefik-public
+    # NÃO coloques "ports:" aqui! O Traefik encaminha o tráfego pela network.
+    volumes:
+      - karaoke-data:/data  # músicas processadas
+      - models:/models      # modelos de IA descarregados (só na primeira vez)
+    environment:
+      # tiny | base | small | medium | large-v3-turbo  (maior = melhor letra, mais lento)
+      WHISPER_MODEL: ${WHISPER_MODEL:-medium}
+      # htdemucs (rápido) | htdemucs_ft (um pouco melhor, ~4x mais lento)
+      DEMUCS_MODEL: ${DEMUCS_MODEL:-htdemucs}
+      # Senha de acesso ao site (definir nas variáveis da stack no Portainer)
+      APP_PASSWORD: ${APP_PASSWORD:?Define APP_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.kamusic.rule=Host(`kamusic.duckdns.org`)"
+      - "traefik.http.routers.kamusic.entrypoints=websecure"
+      - "traefik.http.routers.kamusic.tls.certresolver=letsencrypt"
+      - "traefik.http.services.kamusic.loadbalancer.server.port=8000"
+
+volumes:
+  karaoke-data:
+  models:
+
+networks:
+  traefik-public:
+    external: true
